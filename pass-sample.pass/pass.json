@@ -1,0 +1,54 @@
+{
+  "formatVersion": 1,
+  "passTypeIdentifier": "pass.com.example.loyalty",
+  "teamIdentifier": "TEAMID1234",
+  "organizationName": "Pizzeria Esempio",
+  "serialNumber": "DEMO-0001",
+  "description": "Carte de fidélité Pizzeria Esempio",
+  "logoText": "Pizzeria Esempio",
+  "foregroundColor": "rgb(243, 233, 216)",
+  "backgroundColor": "rgb(40, 28, 20)",
+  "labelColor": "rgb(201, 154, 104)",
+  "maxDistance": 150,
+  "locations": [
+    {
+      "latitude": 44.8378,
+      "longitude": -0.5792,
+      "relevantText": "🍕 Bienvenue ! Présentez votre carte."
+    }
+  ],
+  "storeCard": {
+    "headerFields": [
+      { "key": "points", "label": "POINTS", "value": "3/10" }
+    ],
+    "primaryFields": [
+      { "key": "reward", "label": "PROCHAINE RÉCOMPENSE", "value": "🎁 Pizza offerte" }
+    ],
+    "secondaryFields": [
+      { "key": "tampons", "label": "TAMPONS", "value": "●●●○○○○○○○" },
+      { "key": "reste", "label": "RESTANT", "value": "7 pizzas", "textAlignment": "PKTextAlignmentRight" }
+    ],
+    "auxiliaryFields": [
+      { "key": "membre", "label": "MEMBRE", "value": "Prénom" },
+      { "key": "depuis", "label": "MEMBRE DEPUIS", "value": "2026", "textAlignment": "PKTextAlignmentRight" }
+    ],
+    "backFields": [
+      {
+        "key": "regle",
+        "label": "Programme de fidélité",
+        "value": "À chaque pizza achetée, votre carte est tamponnée 🍕\nUne fois 10 tampons réunis, votre prochaine pizza est offerte !\n\nCarte nominative, non cessible. Une seule carte par client."
+      },
+      { "key": "adresse", "label": "Adresse", "value": "1 rue de l'Exemple\n33000 Bordeaux" },
+      { "key": "horaires", "label": "Horaires", "value": "Mardi – Dimanche\n11h30 – 14h30  ·  18h30 – 22h30\nFermé le lundi" },
+      { "key": "telephone", "label": "Téléphone", "value": "05 00 00 00 00" }
+    ]
+  },
+  "barcodes": [
+    {
+      "format": "PKBarcodeFormatQR",
+      "message": "ESEMPIO-MEMBER-0001",
+      "messageEncoding": "iso-8859-1",
+      "altText": "Membre 0001"
+    }
+  ]
+}
