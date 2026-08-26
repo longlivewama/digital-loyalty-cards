@@ -1,0 +1,12 @@
+node_modules
+.next
+.env*.local
+.env
+*.p12
+certs/
+.vercel
+.DS_Store
+
+certs/
+*.pem
+*.pkpass

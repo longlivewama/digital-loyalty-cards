@@ -1,0 +1,4 @@
+{
+  "regions": ["dub1"],
+  "crons": [{ "path": "/api/cron/review-nudge", "schedule": "0 11 * * *" }]
+}
