@@ -5,21 +5,39 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "e2e": "node scripts/e2e.mjs",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "certs:dev": "bash scripts/dev-certs.sh",
+    "assets": "node scripts/make-assets.mjs",
+    "test:db": "tsx --env-file=.env.local --test tests/db/*.test.ts"
   },
   "dependencies": {
+    "@googleapis/walletobjects": "^18.0.1",
     "@supabase/supabase-js": "^2.45.0",
-    "next": "^15.5.18",
+    "jsonwebtoken": "^9.0.3",
+    "next": "^15.5.27",
     "passkit-generator": "^3.3.0",
     "qrcode": "^1.5.4",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "sharp": "^0.34.5"
+    "react": "^19.0.8",
+    "react-dom": "^19.0.8",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
+    "supabase": "^2.120.0",
+    "tsx": "^4.23.15",
     "typescript": "^5"
+  },
+  "overrides": {
+    "joi": "17.13.8",
+    "postcss": "^8.5.29"
   }
 }
