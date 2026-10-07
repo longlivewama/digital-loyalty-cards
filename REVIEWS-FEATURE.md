@@ -1,3 +1,5 @@
+> **Historical note:** original planning notes (in French) from the pizzeria version of this project. The current product is a coffee shop card: **9 stamps = 1 free coffee**, Apple Wallet + Google Wallet. See README.md for current behaviour.
+
 # Avis Google auto — relance post-visite
 
 Nudge automatique qui invite le client à laisser un avis Google après son passage.
@@ -48,10 +50,10 @@ Empêche n'importe qui de déclencher les relances depuis l'extérieur.
 
 ```bash
 # en local : ajoute à wallet-loyalty/.env.local
-CRON_SECRET=7ae3a69ae7eed333400a7283daed7f6d382f6bd610f1ba45
+CRON_SECRET=<redacted — generate your own with: openssl rand -hex 24>
 
 # sur Vercel (production)
-printf '%s' "7ae3a69ae7eed333400a7283daed7f6d382f6bd610f1ba45" | vercel env add CRON_SECRET production
+openssl rand -hex 24 | vercel env add CRON_SECRET production   # value redacted
 ```
 
 (Vercel envoie automatiquement ce jeton à la route lors de son cron quotidien.)

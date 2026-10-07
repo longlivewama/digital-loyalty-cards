@@ -1,3 +1,5 @@
+> **Historical note:** original planning notes (in French) from the pizzeria version of this project. The current product is a coffee shop card: **9 stamps = 1 free coffee**, Apple Wallet + Google Wallet. See README.md for current behaviour.
+
 # Espace commerçant — spécification complète
 
 Tout ce que le dashboard doit contenir. Statut : ✅ fait · 🔨 à construire · 🕒 plus tard.

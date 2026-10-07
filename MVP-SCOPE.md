@@ -1,3 +1,5 @@
+> **Historical note:** original planning notes (in French) from the pizzeria version of this project. The current product is a coffee shop card: **9 stamps = 1 free coffee**, Apple Wallet + Google Wallet. See README.md for current behaviour.
+
 # MVP — Périmètre à construire
 
 Document court et figé : ce qu'on build **maintenant**, et ce qu'on ne build **pas** (volontairement reporté). Le concept complet est dans `MVP.md`.
