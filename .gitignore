@@ -10,3 +10,15 @@ certs/
 certs/
 *.pem
 *.pkpass
+
+# Google service-account keys (use env variables instead)
+.key.json
+*service-account*.json
+*-key.json
+
+# Supabase CLI local state
+supabase/.temp
+supabase/.branches
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo

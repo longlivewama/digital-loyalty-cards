@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // paquets serveur (natifs / lourds), pas de bundling client
-  serverExternalPackages: ["passkit-generator", "sharp"],
+  // server-only packages (native / heavy): never bundled
+  serverExternalPackages: ["passkit-generator", "sharp", "@googleapis/walletobjects"],
 };
 module.exports = nextConfig;
