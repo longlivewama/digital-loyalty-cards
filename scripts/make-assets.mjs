@@ -1,7 +1,9 @@
-// Generates placeholder coffee-shop artwork for the Wallet card (pass-model/)
-// and the site logo (public/logo.png). Flat generated art, replace it with
+// Generates placeholder coffee-shop artwork for the Wallet card (pass-model/),
+// the site logo (public/logo.png) and the app icons (app/favicon.ico,
+// app/icon.png, app/apple-icon.png — picked up by Next.js automatically). Flat generated art, replace it with
 // your real branding when you have it. Run: npm run assets
 import sharp from "sharp";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -41,6 +43,39 @@ function logoSvg(size) {
   </svg>`;
 }
 
+// App icon: simplified for small sizes (no thin ring; bolder cup; steam only
+// when there is room for it). `rounded` = transparent corners for browsers;
+// iOS applies its own mask, so the apple-icon is a full square.
+function appIconSvg(size, { steam = size >= 48, rounded = true } = {}) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">
+    <rect width="100" height="100" rx="${rounded ? 22 : 0}" fill="#3b2416"/>
+    <path d="M20 ${steam ? 42 : 34} h50 v14 a25 22 0 0 1 -50 0 z" fill="#f5ecde"/>
+    <circle cx="76" cy="${steam ? 52 : 44}" r="9" fill="none" stroke="#f5ecde" stroke-width="6"/>
+    <rect x="14" y="${steam ? 80 : 74}" width="62" height="7" rx="3.5" fill="#d6aa78"/>
+    ${steam ? '<path d="M36 34 q6 -7 0 -14 M52 34 q6 -7 0 -14" stroke="#d6aa78" stroke-width="5" fill="none" stroke-linecap="round"/>' : ""}
+  </svg>`;
+}
+
+// Minimal ICO writer: PNG-compressed entries (supported by all current browsers).
+function ico(pngs) {
+  const header = Buffer.alloc(6 + 16 * pngs.length);
+  header.writeUInt16LE(0, 0); // reserved
+  header.writeUInt16LE(1, 2); // type: icon
+  header.writeUInt16LE(pngs.length, 4);
+  let offset = header.length;
+  pngs.forEach(({ size, data }, i) => {
+    const e = 6 + 16 * i;
+    header.writeUInt8(size >= 256 ? 0 : size, e); // width
+    header.writeUInt8(size >= 256 ? 0 : size, e + 1); // height
+    header.writeUInt16LE(1, e + 4); // color planes
+    header.writeUInt16LE(32, e + 6); // bits per pixel
+    header.writeUInt32LE(data.length, e + 8);
+    header.writeUInt32LE(offset, e + 12);
+    offset += data.length;
+  });
+  return Buffer.concat([header, ...pngs.map((p) => p.data)]);
+}
+
 const png = (svg) => sharp(Buffer.from(svg)).png();
 
 for (const [name, scale] of [["strip.png", 1], ["strip@2x.png", 2], ["strip@3x.png", 3]]) {
@@ -52,4 +87,12 @@ for (const [name, size] of [["icon.png", 29], ["icon@2x.png", 58], ["icon@3x.png
 // Site logo; also the Google Wallet program logo (served at /logo.png, square,
 // Google recommends ≥ 660×660).
 await png(logoSvg(660)).resize(660, 660).toFile(out("public", "logo.png"));
-console.log("Coffee artwork written to pass-model/ and public/logo.png");
+// App icons (Next.js file conventions in app/).
+const icoEntries = [];
+for (const size of [16, 32, 48]) {
+  icoEntries.push({ size, data: await png(appIconSvg(size)).resize(size, size).toBuffer() });
+}
+await fs.writeFile(out("app", "favicon.ico"), ico(icoEntries));
+await png(appIconSvg(512)).resize(512, 512).toFile(out("app", "icon.png"));
+await png(appIconSvg(180, { rounded: false })).resize(180, 180).toFile(out("app", "apple-icon.png"));
+console.log("Coffee artwork written to pass-model/, public/logo.png and app/ icons");
