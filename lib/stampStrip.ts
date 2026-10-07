@@ -2,42 +2,46 @@ import sharp from "sharp";
 import fs from "node:fs";
 import path from "node:path";
 
-// Génère la bande "tampons" de la carte Wallet : une grille de ronds.
-// Vide = rond contour (centre transparent). Plein = l'emoji pizza 🍕 d'Apple
-// (pass-model/pizza.png) dans le rond. Fond transparent → la couleur de la carte
-// (marron, ou vert quand récompense) passe derrière.
-// Dimensions du strip Apple (storeCard) : 375×144 @1x, ×2, ×3.
+// Renders the Wallet card's "stamps" strip: a grid of circles.
+// Empty = outlined circle. Filled = a coffee cup (pass-model/coffee.png if you
+// provide one, otherwise a drawn SVG cup). Transparent background → the card
+// colour (espresso brown, or green when a reward is ready) shows through.
+// Apple strip size (storeCard): 375×144 @1x, ×2, ×3.
 
 const BASE_W = 375;
 const BASE_H = 144;
 
-// L'emoji pizza Apple, chargé une fois en data-URI (pour l'embarquer dans le SVG).
-let pizzaHref: string | null | undefined;
-function pizzaImage(): string | null {
-  if (pizzaHref !== undefined) return pizzaHref;
+// Optional custom stamp artwork, loaded once as a data URI (embedded in the SVG).
+let stampHref: string | null | undefined;
+function stampImage(): string | null {
+  if (stampHref !== undefined) return stampHref;
   try {
-    const p = path.join(process.cwd(), "pass-model", "pizza.png");
-    pizzaHref = "data:image/png;base64," + fs.readFileSync(p).toString("base64");
+    const p = path.join(process.cwd(), "pass-model", "coffee.png");
+    stampHref = "data:image/png;base64," + fs.readFileSync(p).toString("base64");
   } catch {
-    pizzaHref = null;
+    stampHref = null;
   }
-  return pizzaHref;
+  return stampHref;
 }
 
-// Dessin de secours si l'asset emoji est absent (pizza SVG simple).
-function drawnPizza(cx: number, cy: number, r: number): string {
-  const pr = r * 0.15;
-  const ring = r * 0.42;
-  const peps = [0, 1, 2, 3, 4]
-    .map((i) => {
-      const a = (Math.PI * 2 * i) / 5 - Math.PI / 2;
-      return `<circle cx="${(cx + Math.cos(a) * ring).toFixed(1)}" cy="${(cy + Math.sin(a) * ring).toFixed(1)}" r="${pr.toFixed(1)}" fill="#b5341f"/>`;
-    })
-    .join("");
+// Default stamp: a simple coffee cup with a saucer and steam.
+export function drawnCoffee(cx: number, cy: number, r: number): string {
+  const f = (n: number) => n.toFixed(1);
+  const w = r * 0.9; // cup width
+  const h = r * 0.62; // cup height
+  const top = cy - h * 0.35;
+  const left = cx - w / 2 - r * 0.08;
   return (
-    `<circle cx="${cx}" cy="${cy}" r="${(r * 0.86).toFixed(1)}" fill="#d99a52"/>` +
-    `<circle cx="${cx}" cy="${cy}" r="${(r * 0.7).toFixed(1)}" fill="#f3c869"/>` +
-    peps
+    // saucer
+    `<ellipse cx="${f(cx - r * 0.08)}" cy="${f(top + h + r * 0.08)}" rx="${f(w * 0.72)}" ry="${f(r * 0.1)}" fill="#e9d8c0"/>` +
+    // cup body
+    `<path d="M${f(left)} ${f(top)} h${f(w)} v${f(h * 0.55)} a${f(w / 2)} ${f(h * 0.45)} 0 0 1 ${f(-w)} 0 z" fill="#f5ecde"/>` +
+    // coffee surface
+    `<ellipse cx="${f(left + w / 2)}" cy="${f(top + r * 0.02)}" rx="${f(w / 2 - r * 0.06)}" ry="${f(r * 0.07)}" fill="#6b3f22"/>` +
+    // handle
+    `<circle cx="${f(left + w + r * 0.1)}" cy="${f(top + h * 0.35)}" r="${f(r * 0.16)}" fill="none" stroke="#f5ecde" stroke-width="${f(r * 0.09)}"/>` +
+    // steam
+    `<path d="M${f(cx - r * 0.2)} ${f(top - r * 0.12)} q${f(r * 0.1)} ${f(-r * 0.12)} 0 ${f(-r * 0.24)} M${f(cx + r * 0.02)} ${f(top - r * 0.12)} q${f(r * 0.1)} ${f(-r * 0.12)} 0 ${f(-r * 0.24)}" fill="none" stroke="#f5ecde" stroke-width="${f(r * 0.06)}" stroke-linecap="round" opacity="0.8"/>`
   );
 }
 
@@ -56,7 +60,7 @@ function buildSvg(filled: number, goal: number, scale: number, scrim = false): s
   const cellW = (BASE_W - padX * 2 - gapX * (cols - 1)) / cols;
   const cellH = (BASE_H - padY * 2 - gapY * (rows - 1)) / rows;
   const r = Math.min(cellW, cellH) / 2;
-  const href = pizzaImage();
+  const href = stampImage();
   const imgSize = r * 1.78;
 
   const parts: string[] = [];
@@ -76,7 +80,7 @@ function buildSvg(filled: number, goal: number, scale: number, scrim = false): s
       parts.push(
         href
           ? `<image xlink:href="${href}" x="${(cx - imgSize / 2).toFixed(1)}" y="${(cy - imgSize / 2).toFixed(1)}" width="${imgSize.toFixed(1)}" height="${imgSize.toFixed(1)}" preserveAspectRatio="xMidYMid meet"/>`
-          : drawnPizza(cx, cy, r)
+          : drawnCoffee(cx, cy, r)
       );
     }
   }
@@ -86,14 +90,14 @@ function buildSvg(filled: number, goal: number, scale: number, scrim = false): s
   return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${BASE_W} ${BASE_H}">${parts.join("")}</svg>`;
 }
 
-// Compose une résolution : grille (+ voile) PAR-DESSUS la photo de fond (l'ancien
-// strip, ex. la pizza napolitaine). Si la photo manque → fond transparent.
+// Renders one resolution: stamp grid (+ scrim) OVER the background strip
+// (pass-model/strip*.png, coffee-bean artwork). Missing image → transparent.
 async function composeOne(name: string, scale: number, filled: number, goal: number): Promise<Buffer> {
   const w = BASE_W * scale;
   const h = BASE_H * scale;
   try {
     const photo = path.join(process.cwd(), "pass-model", name);
-    const grid = Buffer.from(buildSvg(filled, goal, scale, true)); // voile activé (photo derrière)
+    const grid = Buffer.from(buildSvg(filled, goal, scale, true)); // scrim on (photo behind)
     return await sharp(photo)
       .resize(w, h, { fit: "cover" })
       .composite([{ input: grid, top: 0, left: 0 }])
@@ -104,7 +108,7 @@ async function composeOne(name: string, scale: number, filled: number, goal: num
   }
 }
 
-// Renvoie les 3 résolutions du strip pour un nombre de tampons remplis donné.
+// Returns the 3 strip resolutions for a given number of filled stamps.
 export async function stampStrips(
   filled: number,
   goal: number

@@ -1,6 +1,8 @@
 import { getSettings, DEFAULT_REVIEW_TEXT } from "@/lib/settings";
 import { baseUrl } from "@/lib/url";
 import QRCode from "qrcode";
+import { isAppleWalletConfigured } from "@/lib/pass";
+import { isGoogleWalletConfigured } from "@/lib/googleWallet";
 
 export const dynamic = "force-dynamic";
 
@@ -13,69 +15,80 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="content-narrow">
-      <div className="page-head"><div><div className="page-title">Réglages</div><div className="page-sub">Infos affichées sur les cartes &amp; programme de fidélité</div></div></div>
+      <div className="page-head"><div><div className="page-title">Settings</div><div className="page-sub">Details shown on the cards &amp; loyalty program</div></div></div>
 
-      {saved != null && <div className="note ok">✅ Réglages enregistrés. Les cartes déjà ajoutées se mettent à jour automatiquement (quelques secondes).</div>}
+      {saved != null && <div className="note ok">✅ Settings saved. Cards already in Apple Wallet and Google Wallet update automatically (within a few seconds).</div>}
 
       <div className="panel">
-        <div className="panel-title">Restaurant</div>
+        <div className="panel-title">Coffee shop</div>
         <form action="/api/admin/settings" method="POST" className="form-grid">
           <input type="hidden" name="section" value="resto" />
-          <label>Nom<input name="resto_name" defaultValue={s.resto_name} /></label>
-          <label>Adresse<textarea name="address" rows={2} defaultValue={s.address} /></label>
-          <label>Téléphone<input name="phone" defaultValue={s.phone ?? ""} placeholder="05 56 …" /></label>
-          <label>Horaires<textarea name="hours" rows={2} defaultValue={s.hours} /></label>
+          <label>Name<input name="resto_name" defaultValue={s.resto_name} /></label>
+          <label>Address<textarea name="address" rows={2} defaultValue={s.address} /></label>
+          <label>Phone<input name="phone" defaultValue={s.phone ?? ""} placeholder="+1 555 …" /></label>
+          <label>Opening hours<textarea name="hours" rows={2} defaultValue={s.hours} /></label>
           <label>Instagram (URL)<input name="instagram" defaultValue={s.instagram} /></label>
-          <button type="submit" className="s-btn-full">Enregistrer</button>
+          <button type="submit" className="s-btn-full">Save</button>
         </form>
       </div>
 
       <div className="panel">
-        <div className="panel-title">Avis Google ⭐️ (relance auto)</div>
+        <div className="panel-title">Google reviews ⭐️ (automatic nudge)</div>
         <p className="page-sub">
-          Après une visite, le client reçoit une notification l&apos;invitant à laisser un avis Google. Un lien permanent apparaît aussi au dos de sa carte. Dès qu&apos;il clique, on ne le relance plus jamais.
+          After a visit, the customer gets a notification inviting them to leave a Google review. A permanent link also appears on the back of their Apple card. Once they click it, they are never asked again.
         </p>
         <form action="/api/admin/settings" method="POST" className="form-grid" style={{ marginTop: 12 }}>
           <input type="hidden" name="section" value="review" />
           <label style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <input type="checkbox" name="review_enabled" defaultChecked={s.review_enabled} style={{ width: "auto" }} />
-            <span>Activer la relance avis</span>
+            <span>Enable the review nudge</span>
           </label>
           <label>
-            Lien d&apos;avis Google
+            Google review link
             <input name="review_url" type="url" defaultValue={s.review_url ?? ""} placeholder="https://g.page/r/…/review" />
           </label>
           <label>
-            Délai après la visite (minutes)
+            Delay after the visit (minutes)
             <input name="review_delay_min" type="number" min={0} max={240} defaultValue={s.review_delay_min} />
           </label>
           <label>
-            Nombre max de relances par client
+            Max nudges per customer
             <input name="review_max_nudges" type="number" min={1} max={10} defaultValue={s.review_max_nudges} />
           </label>
           <label>
-            Message de la notification
+            Notification message
             <textarea name="review_nudge_text" rows={2} maxLength={120} defaultValue={s.review_nudge_text ?? ""} placeholder={DEFAULT_REVIEW_TEXT} />
           </label>
-          <button type="submit" className="s-btn-full">Enregistrer</button>
+          <button type="submit" className="s-btn-full">Save</button>
         </form>
         {!s.review_url && (
           <p className="note" style={{ marginTop: 12 }}>
-            ⚠️ Sans lien d&apos;avis, la relance reste inactive (le lien au dos de la carte n&apos;apparaît pas non plus).
+            ⚠️ Without a review link the nudge stays off (and no link appears on the back of the card).
           </p>
         )}
       </div>
 
       <div className="panel">
-        <div className="panel-title">QR d&apos;inscription (à imprimer)</div>
-        <p className="page-sub">Affichez ce QR au comptoir. Le client le scanne pour ajouter sa carte au Wallet.</p>
-        <div style={{ marginTop: 12 }}><div className="qr-print"><img src={qr} alt="QR inscription" /></div></div>
+        <div className="panel-title">Signup QR code (to print)</div>
+        <p className="page-sub">Display this QR code at the counter. Customers scan it to add their card to Apple Wallet or Google Wallet.</p>
+        <div style={{ marginTop: 12 }}><div className="qr-print"><img src={qr} alt="Signup QR code" /></div></div>
         <p className="page-sub" style={{ marginTop: 8 }}>{joinUrl}</p>
       </div>
 
       <div className="panel">
-        <div className="panel-title">Sécurité</div>
-        <p className="page-sub">Le code PIN d&apos;accès se change via la variable d&apos;environnement <strong>MERCHANT_PIN</strong> (redéploiement requis).</p>
+        <div className="panel-title">Loyalty program</div>
+        <p className="page-sub">Buy {s.goal} coffees, get the next one free: {s.goal} stamps = 1 free coffee. The goal is fixed in the database to keep every card consistent.</p>
+      </div>
+
+      <div className="panel">
+        <div className="panel-title">Wallet status</div>
+        <div className="info-row"><span className="info-k">Apple Wallet</span><span className="info-v">{isAppleWalletConfigured() ? "Configured ✓" : "Not configured (PASS_* variables missing)"}</span></div>
+        <div className="info-row"><span className="info-k">Google Wallet</span><span className="info-v">{isGoogleWalletConfigured() ? "Configured ✓" : "Not configured (WALLET_ISSUER_ID / service account missing)"}</span></div>
+      </div>
+
+      <div className="panel">
+        <div className="panel-title">Security</div>
+        <p className="page-sub">The staff PIN is changed with the <strong>MERCHANT_PIN</strong> environment variable (restart/redeploy required).</p>
       </div>
     </div>
   );

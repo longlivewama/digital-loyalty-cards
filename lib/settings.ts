@@ -9,7 +9,7 @@ export type Settings = {
   goal: number;
   offer_text: string | null;
   offer_at: string | null;
-  // --- Avis Google (relance auto post-visite) ---
+  // --- Google review nudge (automatic, after a visit) ---
   review_enabled: boolean;
   review_url: string | null;
   review_delay_min: number;
@@ -17,17 +17,17 @@ export type Settings = {
   review_nudge_text: string | null;
 };
 
-// Message par défaut de la relance avis (si review_nudge_text est vide).
+// Default review-nudge message (used when review_nudge_text is empty).
 export const DEFAULT_REVIEW_TEXT =
-  "On espère que vous vous êtes régalé ! 🍕 Un avis ⭐️ nous aiderait énormément — le lien est au dos de votre carte. Grazie mille !";
+  "We hope you enjoyed your coffee! ☕ A ⭐️ review would mean a lot to us — the link is on the back of your card. Thank you!";
 
 export const DEFAULT_SETTINGS: Settings = {
-  resto_name: "Pizzeria Esempio",
-  address: "1 rue de l'Exemple\n33000 Bordeaux",
+  resto_name: "Coffee Shop",
+  address: "1 Example Street\nYour City",
   phone: null,
-  hours: "Mar–Sam · 11h–14h · 18h–22h (22h30 ven-sam)\nDim · 18h–22h30 · Fermé le lundi",
-  instagram: "https://www.instagram.com/pizzeria-esempio/",
-  goal: 10,
+  hours: "Mon–Fri · 7am–6pm\nSat–Sun · 8am–5pm",
+  instagram: "https://www.instagram.com/",
+  goal: 9,
   offer_text: null,
   offer_at: null,
   review_enabled: false,
@@ -37,8 +37,8 @@ export const DEFAULT_SETTINGS: Settings = {
   review_nudge_text: null,
 };
 
-// Lit la ligne de réglages. Renvoie les defaults si la table n'existe pas encore
-// (avant migration) ou en cas d'erreur — le site ne casse jamais.
+// Reads the settings row. Falls back to the defaults if the table does not
+// exist yet (before migration) or on error — the site never breaks.
 export async function getSettings(): Promise<Settings> {
   try {
     const db = supabaseAdmin();

@@ -28,7 +28,7 @@ export async function sendReviewNudges(): Promise<{
 }> {
   const s = await getSettings();
   if (!s.review_enabled || !s.review_url) {
-    return { sent: 0, candidates: 0, skipped: "feature désactivée ou lien d'avis manquant" };
+    return { sent: 0, candidates: 0, skipped: "feature disabled or review link missing" };
   }
 
   const db = supabaseAdmin();
@@ -49,7 +49,7 @@ export async function sendReviewNudges(): Promise<{
     .gte("created_at", floor)
     .lte("created_at", ceil);
   const ids = [...new Set((evs ?? []).map((e) => e.member_id))].filter(Boolean) as string[];
-  if (!ids.length) return { sent: 0, candidates: 0, skipped: "aucun scan dans la fenêtre" };
+  if (!ids.length) return { sent: 0, candidates: 0, skipped: "no scan in the window" };
 
   // 2) charge ces membres + leur état avis
   const { data: members } = await db
@@ -69,7 +69,7 @@ export async function sendReviewNudges(): Promise<{
     })
     .slice(0, MAX_PER_RUN);
 
-  if (!due.length) return { sent: 0, candidates: ids.length, skipped: "tous filtrés" };
+  if (!due.length) return { sent: 0, candidates: ids.length, skipped: "all filtered out" };
 
   // 4) relance : on écrit le message (déclenche la notif lock-screen via le
   // champ avant "news") + push APNs, puis on horodate.
@@ -111,7 +111,7 @@ export async function sendReviewNudges(): Promise<{
       .in("id", deadIds);
   }
 
-  console.log(`[REVIEW-NUDGE] candidats=${ids.length} relancés=${sent} morts=${deadIds.length}`);
+  console.log(`[REVIEW-NUDGE] candidates=${ids.length} nudged=${sent} dead=${deadIds.length}`);
   return { sent, candidates: ids.length, skipped: "" };
 }
 

@@ -141,7 +141,7 @@ form + form { margin-top: 10px; }
 /* Big number */
 .points-big { font-family: var(--font-display), sans-serif; font-size: 68px; font-weight: 800; color: var(--copper); line-height: 1; margin: 6px 0 2px; }
 
-/* Stamp tokens (gros tampons) */
+/* Stamp tokens (large stamps) */
 .stamps-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 18px auto; max-width: 300px; }
 .stamp {
   aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -280,8 +280,8 @@ textarea:focus { border-color: var(--copper); }
 .member-head { display: flex; align-items: center; gap: 14px; text-align: left; margin-bottom: 6px; }
 
 /* =======================================================
-   DASHBOARD PRO (clair) — scoped sous .app-shell / .app-page
-   DA Pizzeria Esempio : crème, noir espresso, rouge tomate, cuivre
+   STAFF DASHBOARD (light) — scoped under .app-shell / .app-page
+   Palette: cream, espresso black, roast red, copper
    ======================================================= */
 .app-shell, .app-page {
   --s-bg: #f4efe6; --s-panel: #ffffff; --s-ink: #2a2320; --s-ink-dim: #8a7f73;
@@ -436,7 +436,7 @@ textarea:focus { border-color: var(--copper); }
 .app-page .stamp.full { border: 2px solid var(--s-copper); background: radial-gradient(circle at 35% 30%, #e8b878, var(--s-copper)); color: #2a1a0e; }
 
 /* =======================================================================
-   ✦ AESTHETIC UPGRADE — "Trattoria editoriale" (dashboard light only)
+   ✦ AESTHETIC UPGRADE — editorial café style (dashboard light only)
    Appended layer: same selectors as above → wins by source order.
    Scope strictly .app-shell / .app-page so customer dark pages are untouched.
    Remove this whole block to revert (or restore globals.css.bak).
@@ -703,3 +703,18 @@ a.row-item { text-decoration: none; color: inherit; }
 .rank.top3 { background: linear-gradient(180deg, var(--s-copper), #8a5f33); color: #fff; border-color: transparent; }
 .stats-link { display: inline-block; margin-top: 10px; color: var(--s-red); font-weight: 700; font-size: 13px; text-decoration: none; }
 .stats-link:hover { text-decoration: underline; }
+
+/* Wallet choice (signup confirmation): Apple + Google buttons */
+.wallet-buttons { display: flex; flex-direction: column; gap: 10px; }
+.card a.wallet-btn { text-decoration: none; display: block; text-align: center; }
+.card a.wallet-btn.apple { background: #000; color: #fff; border: 1px solid #333; }
+.card a.wallet-btn.google { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; }
+
+/* Narrow phones: keep every chart column (incl. the current week) and the
+   activity time visible; long customer names wrap instead of pushing out. */
+.spark-col { min-width: 0; }
+.row-item .grow { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .spark { gap: 4px; min-width: 0; }
+  .spark-day { font-size: 9px; letter-spacing: -0.02em; }
+}

@@ -6,10 +6,10 @@ import { cycle, rewardsAvailable } from "./loyalty";
 export type Segment = "all" | "inactive" | "reward" | "near";
 
 export const SEGMENT_LABELS: Record<Segment, string> = {
-  all: "Tous les clients actifs",
-  inactive: "Inactifs depuis 30 jours",
-  reward: "Récompense disponible",
-  near: "Proches du palier (≤2)",
+  all: "All active customers",
+  inactive: "Inactive for 30 days",
+  reward: "Free coffee available",
+  near: "Close to a reward (≤2 left)",
 };
 
 type Row = { id: string; push_token: string | null; points: number | null; created_at: string };
@@ -114,7 +114,7 @@ export async function broadcast(message: string, segment: Segment): Promise<numb
       .from("members")
       .update({ push_token: null, registered_at: null, device_lib_id: null })
       .in("id", deadIds);
-    console.log(`[BROADCAST] ${deadIds.length} token(s) mort(s) nettoyé(s)`);
+    console.log(`[BROADCAST] ${deadIds.length} dead token(s) cleaned up`);
   }
 
   // 4) historique campagne (best-effort)
@@ -159,7 +159,7 @@ export async function refreshActiveCards(): Promise<number> {
       .update({ push_token: null, registered_at: null, device_lib_id: null })
       .in("id", deadIds);
   }
-  console.log(`[REFRESH-CARDS] rafraîchies=${sent} mortes=${deadIds.length}`);
+  console.log(`[REFRESH-CARDS] refreshed=${sent} dead=${deadIds.length}`);
   return sent;
 }
 

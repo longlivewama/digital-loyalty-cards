@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 
-// Champ date de naissance avec placeholder maison.
-// iOS + `appearance:none` (nécessaire pour que le champ ne déborde pas) n'affiche
-// PAS le masque natif "jj/mm/aaaa" quand le champ est vide → on superpose notre
-// propre libellé, masqué dès qu'une date est saisie.
+// Birthday field with a custom placeholder.
+// iOS + `appearance:none` (needed so the field does not overflow) does NOT show
+// the native date mask while empty → we overlay our own label, hidden as soon
+// as a date is entered.
 export default function BirthdayField() {
   const [value, setValue] = useState("");
   return (
@@ -14,11 +14,12 @@ export default function BirthdayField() {
         name="birthday"
         type="date"
         autoComplete="bday"
+        aria-label="Birthday (optional)"
         className={value ? undefined : "date-empty"}
         value={value}
         onChange={(e) => setValue(e.target.value)}
       />
-      {!value && <span className="date-ph" aria-hidden="true">Date de naissance</span>}
+      {!value && <span className="date-ph" aria-hidden="true">Birthday (optional)</span>}
     </div>
   );
 }

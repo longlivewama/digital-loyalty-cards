@@ -1,21 +1,26 @@
-// Saisie du PIN commerçant (page publique). Une fois validé, cookie posé.
+import { getSettings } from "@/lib/settings";
+
+export const dynamic = "force-dynamic";
+
+// Staff PIN entry (public page). Once validated, a session cookie is set.
 export default async function Login({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const sp = await searchParams;
+  const s = await getSettings();
   return (
     <div className="card">
-      <h1>🔒 Espace commerçant</h1>
-      <h2>Pizzeria Esempio</h2>
-      <p className="muted">Entrez le code PIN du restaurant pour accéder à la fiche client.</p>
+      <h1>🔒 Staff area</h1>
+      <h2>{s.resto_name}</h2>
+      <p className="muted">Enter the shop PIN to open the customer card.</p>
       {sp.error === "locked" ? (
         <p style={{ color: "#ff9b9b", fontSize: 14, marginTop: 8 }}>
-          Trop d&apos;essais. Réessayez dans 15 minutes.
+          Too many attempts. Please try again in 15 minutes.
         </p>
       ) : sp.error ? (
-        <p style={{ color: "#ff9b9b", fontSize: 14, marginTop: 8 }}>Code incorrect.</p>
+        <p style={{ color: "#ff9b9b", fontSize: 14, marginTop: 8 }}>Incorrect PIN.</p>
       ) : null}
       <form action="/api/auth" method="POST">
         <input type="hidden" name="next" value={sp.next ?? "/dashboard"} />
@@ -23,11 +28,11 @@ export default async function Login({
           name="pin"
           type="password"
           inputMode="numeric"
-          placeholder="Code PIN"
+          placeholder="PIN"
           autoFocus
           required
         />
-        <button type="submit">Déverrouiller</button>
+        <button type="submit">Unlock</button>
       </form>
     </div>
   );

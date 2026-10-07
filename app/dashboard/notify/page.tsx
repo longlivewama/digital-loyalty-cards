@@ -6,9 +6,9 @@ const SEGMENTS: Segment[] = ["all", "inactive", "reward", "near"];
 
 function timeAgo(iso: string): string {
   const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000);
-  if (h < 1) return "il y a <1 h";
-  if (h < 24) return `il y a ${h} h`;
-  return `il y a ${Math.floor(h / 24)} j`;
+  if (h < 1) return "<1 h ago";
+  if (h < 24) return `${h} h ago`;
+  return `${Math.floor(h / 24)} d ago`;
 }
 
 export default async function Notify({ searchParams }: { searchParams: Promise<{ sent?: string }> }) {
@@ -21,15 +21,15 @@ export default async function Notify({ searchParams }: { searchParams: Promise<{
   return (
     <div className="content-narrow">
       <div className="page-head">
-        <div><div className="page-title">Notifications</div><div className="page-sub">Push sur l&apos;écran verrouillé de toutes les cartes ciblées — gratuit, instantané.</div></div>
+        <div><div className="page-title">Notifications</div><div className="page-sub">Lock-screen push to every targeted Apple Wallet card — free and instant. Google Wallet cards show the message on their next update.</div></div>
       </div>
 
-      {sent != null && <div className="note ok">✅ Notification envoyée à {sent} carte{Number(sent) > 1 ? "s" : ""}.</div>}
+      {sent != null && <div className="note ok">✅ Notification sent to {sent} card{Number(sent) === 1 ? "" : "s"}.</div>}
 
       <div className="panel">
-        <div className="panel-title">Nouvelle campagne</div>
+        <div className="panel-title">New campaign</div>
         <form action="/api/admin/broadcast" method="POST">
-          <textarea name="message" maxLength={120} required rows={3} placeholder="Ce soir −20% sur les calzones 🍕 (max 120 caractères)" />
+          <textarea name="message" maxLength={120} required rows={3} placeholder="Today only: 20% off all lattes ☕ (max 120 characters)" />
           <div className="seg-opts">
             {SEGMENTS.map((s, i) => (
               <label key={s} className="seg-opt">
@@ -39,16 +39,16 @@ export default async function Notify({ searchParams }: { searchParams: Promise<{
               </label>
             ))}
           </div>
-          <button type="submit" className="s-btn-full">Envoyer la notification</button>
+          <button type="submit" className="s-btn-full">Send notification</button>
         </form>
       </div>
 
       <div className="panel">
-        <div className="panel-title">Campagnes envoyées</div>
-        {history.length === 0 && <p className="page-sub">Aucune campagne pour l&apos;instant.</p>}
+        <div className="panel-title">Sent campaigns</div>
+        {history.length === 0 && <p className="page-sub">No campaigns yet.</p>}
         {history.map((c) => (
           <div key={c.id} className="row-item">
-            <div className="grow"><strong>{c.message}</strong><div className="page-sub">{SEGMENT_LABELS[c.segment as Segment] ?? c.segment} · {c.sent_count} envoyées</div></div>
+            <div className="grow"><strong>{c.message}</strong><div className="page-sub">{SEGMENT_LABELS[c.segment as Segment] ?? c.segment} · {c.sent_count} sent</div></div>
             <span className="t">{timeAgo(c.created_at)}</span>
           </div>
         ))}

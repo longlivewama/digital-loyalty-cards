@@ -11,10 +11,10 @@ export const maxDuration = 60;
 async function handle(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
-    return NextResponse.json({ error: "CRON_SECRET non configuré" }, { status: 500 });
+    return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
   }
   if (req.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "non autorisé" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const report = await sendReviewNudges();

@@ -1,11 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Client serveur (clé service_role — JAMAIS exposée au navigateur).
-// Utilisé uniquement dans les routes/actions serveur.
+// Server client (service_role key — NEVER exposed to the browser).
+// Used only in server routes/actions.
 export function supabaseAdmin() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY manquants");
+  if (!url || !key) throw new Error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing");
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
@@ -13,6 +13,9 @@ export type Member = {
   id: string;
   serial: string;
   name: string;
+  last_name?: string | null;
+  birthday?: string | null;
+  note?: string | null;
   points: number;
   total_earned: number;
   phone: string | null;
@@ -27,4 +30,7 @@ export type Member = {
   review_prompted_at?: string | null;
   reviewed_at?: string | null;
   review_nudges?: number | null;
+  device_lib_id?: string | null;
+  // Google Wallet loyalty object id (set once the customer asks for the card).
+  google_object_id?: string | null;
 };

@@ -1,12 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { verifyCardKey } from "@/lib/linkSign";
 
 export const runtime = "nodejs";
 
-// Le front (page /added) poll cet endpoint : registered=true dès que la carte
-// a été ajoutée au Wallet (l'appareil s'est enregistré).
-export async function GET(_req: Request, ctx: { params: Promise<{ serial: string }> }) {
+// The /added page polls this endpoint: registered=true as soon as the card has
+// been added to Apple Wallet (the device registered itself).
+export async function GET(req: NextRequest, ctx: { params: Promise<{ serial: string }> }) {
   const { serial } = await ctx.params;
+  if (!(await verifyCardKey(serial, req.nextUrl.searchParams.get("k")))) {
+    return NextResponse.json({ error: "Invalid link." }, { status: 403 });
+  }
   const db = supabaseAdmin();
   const { data } = await db
     .from("members")
