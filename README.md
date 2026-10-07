@@ -3,12 +3,7 @@
 A digital loyalty-card platform for a coffee shop: customers get a stamp card in **Apple Wallet** or **Google Wallet**, staff scan it with a phone, and **9 stamps earn a free coffee**. Built with Next.js, TypeScript and Supabase (PostgreSQL).
 
 <p align="center">
-  <img src="docs/join.png" width="260" alt="Customer signup page: first name, last name, optional birthday and phone">
-  <img src="docs/member-card.png" width="260" alt="Staff member page showing 6 of 9 stamps with add, correct and refresh actions">
-  <img src="docs/staff-login.png" width="260" alt="Staff area protected by a PIN">
-</p>
-<p align="center">
-  <img src="docs/dashboard.png" width="790" alt="Staff dashboard with live scans, rewards, members and coffees stamped">
+  <img src="docs/images/hero-wallets.webp" width="100%" alt="Digital Loyalty Cards for Apple Wallet and Google Wallet: an Apple Wallet pass and a Google Wallet card for the same coffee loyalty account, both at 6 of 9 stamps with the same member QR code">
 </p>
 
 ## Overview
@@ -18,6 +13,21 @@ A customer fills in a short form and gets a personal loyalty card. They can add 
 Each card carries a QR code that identifies the customer. When staff scan it with a phone camera, a PIN-protected member page opens. There they add stamps, correct mistakes and redeem the free coffee. The database is updated first; then both wallet cards are refreshed in the background, so the stamps on the customer's phone update by themselves.
 
 Apple Wallet and Google Wallet are **two views of the same loyalty account**. There is one customer record and one stamp balance (`members.points` in Supabase). Both wallets render that balance and carry the same QR identity. Neither wallet keeps a balance of its own.
+
+## Wallet experience
+
+<p align="center">
+  <img src="docs/images/product-screens.webp" width="100%" alt="Four screenshots of the running app: customer signup form, wallet choice with Add to Apple Wallet, Add to Google Wallet and the member QR code, staff member page at 6 of 9 stamps, and the same page at 9 of 9 with Redeem free coffee">
+</p>
+
+These are screenshots of the running app, taken from a local build with a demo customer.
+
+1. The customer signs up.
+2. The customer picks **Add to Apple Wallet** or **Add to Google Wallet**, or keeps the member QR on screen.
+3. Staff scan the QR and add stamps.
+4. At **9/9** the staff page offers **Redeem free coffee**.
+
+Both wallet cards show the same balance and the same QR code; see [Apple Wallet setup](#apple-wallet-setup) and [Google Wallet setup](#google-wallet-setup).
 
 ## Features
 
@@ -43,33 +53,18 @@ Apple Wallet and Google Wallet are **two views of the same loyalty account**. Th
 - **Supabase / PostgreSQL:** atomic SQL functions for stamps and rewards, with row-level security enabled.
 - **Responsive UI:** the customer pages and the staff member page work at phone width.
 
-## Architecture
-
-```
-Customer / Staff phone
-        |
-        v
-Next.js application (App Router: pages, API routes, Apple Wallet web service)
-        |
-        +-------------------------+
-        |                         |
-        v                         v
-Supabase / PostgreSQL       Wallet services (best-effort, after the DB write)
-        |                         |
-        |                 +-------+--------+
-        |                 |                |
-        v                 v                v
-  members.points     Apple Wallet     Google Wallet
-  (the balance)      .pkpass + APNs   loyalty object
-```
-
-- **`members.points` is the single source of truth.** Every stamp, correction and redemption goes through the atomic SQL functions `change_points` and `claim_reward`.
-- **Wallet passes only reflect the database:**
-  - The Apple pass is regenerated from the member row whenever iOS asks for it.
-  - The Google object is rewritten with the member's full current state, never with a delta, so a failed sync is repaired by the next successful one.
-- **Wallet updates run after the database commit** (Next.js `after()`) and are independent of each other. An Apple or Google failure is logged and never rolls back or changes the balance.
+<p align="center">
+  <img src="docs/images/staff-dashboard.webp" width="100%" alt="Staff dashboard showing today's scans, rewards and new members, a 7-day chart, member count, active Apple cards, return rate and coffees stamped">
+</p>
 
 ## Loyalty flow
+
+<p align="center">
+  <img src="docs/images/loyalty-flow.webp" width="100%" alt="Loyalty flow in eight steps: sign up, get loyalty card, Apple or Google Wallet, show QR, staff scans, stamp added, 9 stamps, free coffee with carry-over from 10 to 1">
+</p>
+
+<details>
+<summary>Text version of the flow</summary>
 
 ```
 Customer signs up (/join)
@@ -93,7 +88,44 @@ Staff redeems → claim_reward() subtracts 9 only if the balance has at least 9
 Balance resets to 0, or keeps the extra stamps (10 → 1)
 ```
 
+</details>
+
 While a reward is waiting, cards show a full `9/9`. Extra stamps are kept and shown again once the reward is redeemed.
+
+## Architecture
+
+<p align="center">
+  <img src="docs/images/wallet-architecture.webp" width="100%" alt="Architecture: one loyalty account with an Apple Wallet pass and a Google Wallet card, both rendered from the single Supabase row members.points, with no balance of their own">
+</p>
+
+<details>
+<summary>Text version of the architecture</summary>
+
+```
+Customer / Staff phone
+        |
+        v
+Next.js application (App Router: pages, API routes, Apple Wallet web service)
+        |
+        +-------------------------+
+        |                         |
+        v                         v
+Supabase / PostgreSQL       Wallet services (best-effort, after the DB write)
+        |                         |
+        |                 +-------+--------+
+        |                 |                |
+        v                 v                v
+  members.points     Apple Wallet     Google Wallet
+  (the balance)      .pkpass + APNs   loyalty object
+```
+
+</details>
+
+- **`members.points` is the single source of truth.** Every stamp, correction and redemption goes through the atomic SQL functions `change_points` and `claim_reward`.
+- **Wallet passes only reflect the database:**
+  - The Apple pass is regenerated from the member row whenever iOS asks for it.
+  - The Google object is rewritten with the member's full current state, never with a delta, so a failed sync is repaired by the next successful one.
+- **Wallet updates run after the database commit** (Next.js `after()`) and are independent of each other. An Apple or Google failure is logged and never rolls back or changes the balance.
 
 ## Technology stack
 
@@ -135,7 +167,7 @@ tests/                      Unit tests; tests/db/ = database-backed tests
 scripts/                    e2e.mjs (HTTP end-to-end), dev-certs.sh (test certs), make-assets.mjs (artwork)
 pass-model/                 Apple pass images (generated placeholder artwork)
 public/                     Site / Google Wallet logo
-docs/                       Screenshots
+docs/images/                README visuals (screenshots + mockups rendered from the app's pass data)
 MIGRATION-*.sql             Original SQL files + MIGRATION-COFFEE-GOOGLE-WALLET.sql for existing databases
 pass-sample.pass/, sign.sh  Hand-built sample pass and manual signing script (prototyping)
 ```
@@ -230,6 +262,12 @@ If the Apple or Google variables are missing, that wallet's button is hidden and
 
 ## Apple Wallet setup
 
+<p align="center">
+  <img src="docs/images/apple-wallet.webp" width="100%" alt="Apple Wallet digital coffee loyalty card: the Add to Apple Wallet button, then a pass mockup at 6 of 9 stamps, then the same pass at 9 of 9 showing Free coffee">
+</p>
+
+<sub>The pass images are mockups rendered from the fields, stamp strip and QR code that <code>lib/pass.ts</code> produces, using demo data. They are not screenshots from a device: installation on a real iPhone hasn't been verified yet (see <a href="#testing-and-qa">Testing and QA</a>).</sub>
+
 1. An **Apple Developer account**, with a **Pass Type ID** (`PASS_TYPE_ID`) and your **Team ID** (`TEAM_ID`).
 2. Create the Pass Type ID **certificate**, export it as `.p12`, and split it into PEM files:
    ```bash
@@ -249,6 +287,12 @@ How it works:
 **Local testing vs production.** `npm run certs:dev` generates **self-signed test certificates**. They exercise the whole generation and signing path, and the tests verify the signature with OpenSSL, but **iPhones reject these passes** and they are **not production credentials**. No certificates or keys are committed to this repository.
 
 ## Google Wallet setup
+
+<p align="center">
+  <img src="docs/images/google-wallet.webp" width="100%" alt="Google Wallet digital coffee loyalty card: the Add to Google Wallet button, then a loyalty card mockup at 6 of 9 stamps, then the synced card at 9 of 9 with Free coffee available">
+</p>
+
+<sub>The card images are mockups rendered from the loyalty class and object that <code>lib/googleWallet.ts</code> builds, using demo data. The real Google Wallet save flow hasn't been verified with a production issuer account yet (see <a href="#testing-and-qa">Testing and QA</a>).</sub>
 
 1. In the **Google Pay & Wallet Console**, create an issuer account → `WALLET_ISSUER_ID`.
 2. In **Google Cloud**, enable the **Google Wallet API**, create a **service account** and download its JSON key. Copy its fields into the variables above; don't commit the JSON file.
