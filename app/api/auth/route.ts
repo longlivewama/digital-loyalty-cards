@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { merchantSession } from "@/lib/linkSign";
 
 export const runtime = "nodejs";
 
-// Anti-force-brute : après MAX_TRIES essais ratés dans WINDOW, l'IP est bloquée
-// pendant LOCK. Les compteurs vivent dans la table `login_attempts` (Supabase),
-// seul stockage partagé fiable en serverless (chaque requête = machine différente,
-// une variable en mémoire ne tiendrait pas).
+// Brute-force protection: after MAX_TRIES failed attempts within WINDOW, the IP
+// is locked for LOCK. Counters live in the `login_attempts` table (Supabase), the
+// only reliable shared storage in serverless (an in-memory variable would not
+// survive between requests).
 const MAX_TRIES = 5;
-const WINDOW_MS = 15 * 60_000; // fenêtre de comptage : 15 min
-const LOCK_MS = 15 * 60_000; // durée du blocage : 15 min
+const WINDOW_MS = 15 * 60_000; // counting window: 15 min
+const LOCK_MS = 15 * 60_000; // lock duration: 15 min
 
 function clientIp(req: NextRequest): string {
   const fwd = req.headers.get("x-forwarded-for");
@@ -79,8 +80,8 @@ export async function POST(req: NextRequest) {
   const next = (form.get("next") as string | null) || "/dashboard";
   const expected = process.env.MERCHANT_PIN;
 
-  // n'autoriser que les chemins internes (anti open-redirect)
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
+  // internal paths only (no open redirect, including protocol-relative "//host")
+  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
   const ip = clientIp(req);
 
   // Trop d'essais ratés récents → on refuse, même si le PIN est bon.
@@ -101,11 +102,12 @@ export async function POST(req: NextRequest) {
 
   await clearAttempts(ip);
   const res = NextResponse.redirect(new URL(safeNext, req.url), 303);
-  res.cookies.set("mpin", expected, {
+  // The cookie holds an HMAC of the PIN, never the PIN itself.
+  res.cookies.set("mpin", await merchantSession(expected), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // http en dev, https en prod
+    secure: process.env.NODE_ENV === "production", // http in dev, https in prod
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30, // 30 jours
+    maxAge: 60 * 60 * 24 * 30, // 30 days
     path: "/",
   });
   return res;

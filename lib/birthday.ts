@@ -1,9 +1,9 @@
-// Helpers date de naissance. `birthday` arrive de Supabase au format "YYYY-MM-DD"
-// (colonne `date`, voir MIGRATION-PROFILE.sql) ou null si le client ne l'a pas saisie.
+// Birthday helpers. `birthday` comes from Supabase as "YYYY-MM-DD"
+// (`date` column, see MIGRATION-PROFILE.sql) or null if the customer skipped it.
 
 const MOIS = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
 // Parse robuste : on lit l'année/mois/jour à la main pour éviter les décalages
@@ -39,14 +39,14 @@ export function birthdayDay(birthday?: string | null): number {
   return p ? p.d : Number.POSITIVE_INFINITY;
 }
 
-// "12 mars 1990" (ou "12 mars" si année absente) ; "" si pas de date.
+// "12 March 1990" (or "12 March" without a year); "" when there is no date.
 export function formatBirthday(birthday?: string | null): string {
   const p = parts(birthday);
   if (!p) return "";
   return `${p.d} ${MOIS[p.m - 1]}${p.y ? ` ${p.y}` : ""}`;
 }
 
-// "12 mars" (jour + mois, sans année) — pour les listes d'anniversaires.
+// "12 March" (day + month, no year) — for birthday lists.
 export function formatDayMonth(birthday?: string | null): string {
   const p = parts(birthday);
   if (!p) return "";

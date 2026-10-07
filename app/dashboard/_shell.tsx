@@ -65,23 +65,23 @@ const ICON = {
 };
 
 const TABS = [
-  { href: "/dashboard", label: "Accueil", icon: ICON.home },
-  { href: "/dashboard/members", label: "Membres", icon: ICON.users },
+  { href: "/dashboard", label: "Home", icon: ICON.home },
+  { href: "/dashboard/members", label: "Members", icon: ICON.users },
   { href: "/dashboard/notify", label: "Notifications", icon: ICON.bell },
-  { href: "/dashboard/stats", label: "Statistiques", icon: ICON.chart },
-  { href: "/dashboard/settings", label: "Réglages", icon: ICON.gear },
+  { href: "/dashboard/stats", label: "Statistics", icon: ICON.chart },
+  { href: "/dashboard/settings", label: "Settings", icon: ICON.gear },
 ];
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({ children, shopName }: { children: React.ReactNode; shopName: string }) {
   const path = usePathname();
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="side-brand" title="Pizzeria Esempio">
+        <div className="side-brand" title={shopName}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Pizzeria Esempio" className="side-logo-img" />
-          <span className="side-name">Pizzeria Esempio<br /></span>
+          <img src="/logo.png" alt={shopName} className="side-logo-img" />
+          <span className="side-name">{shopName}<br /></span>
         </div>
 
         <nav className="side-nav">
@@ -97,18 +97,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <form action="/api/auth/logout" method="POST" className="side-logout">
-          <button type="submit" title="Déconnexion">
-            <span className="side-ico">{ICON.power}</span><span className="side-label">Déconnexion</span>
+          <button type="submit" title="Log out">
+            <span className="side-ico">{ICON.power}</span><span className="side-label">Log out</span>
           </button>
         </form>
       </aside>
 
       <div className="app-main">
         <header className="topbar">
-          <span className="topbar-title">Espace commerçant</span>
+          <span className="topbar-title">Staff area</span>
           <div className="topbar-right">
-            <span className="topbar-badge">Bordeaux · Bordeaux</span>
-            <span className="topbar-avatar" title="le gérant">T</span>
+            <span className="topbar-badge">Loyalty · 9 stamps = free coffee</span>
+            <span className="topbar-avatar" title="Manager">☕</span>
           </div>
         </header>
         <main className="app-content">{children}</main>

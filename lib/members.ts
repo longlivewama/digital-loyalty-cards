@@ -2,25 +2,36 @@ import { supabaseAdmin } from "./supabase";
 import { pushPassUpdate } from "./apns";
 import { getSettings } from "./settings";
 import { logEvent } from "./events";
+import { syncMember } from "./googleWallet";
 
 const now = () => new Date().toISOString();
 
-// Pousse la MAJ de la carte vers l'iPhone du client.
-// À lancer EN ARRIÈRE-PLAN (after()) : pas besoin de faire attendre le commerçant
-// la réponse d'Apple. La MAJ `updated_at` est déjà faite dans la mutation.
-export async function pushUpdate(id: string) {
+// Apple Wallet: APNs push so the iPhone re-downloads the card.
+async function pushApple(id: string) {
   const db = supabaseAdmin();
   const { data } = await db.from("members").select("push_token").eq("id", id).single();
   if (!data?.push_token) return;
   const timeout = new Promise<number>((r) => setTimeout(() => r(-9), 5000));
   const status = await Promise.race([pushPassUpdate(data.push_token), timeout]);
-  // 410 = Unregistered, 400 = BadDeviceToken → token mort : on le purge.
+  // 410 = Unregistered, 400 = BadDeviceToken → dead token: purge it.
   if (status === 410 || status === 400) {
     await db
       .from("members")
       .update({ push_token: null, registered_at: null, device_lib_id: null })
       .eq("id", id);
   }
+}
+
+// Pushes the card update to BOTH wallets, after the database mutation.
+// Run it in the BACKGROUND (after()): the merchant does not wait for Apple or
+// Google. Each side is independent and best-effort: a wallet failure is logged
+// and never touches the stamp balance (the database stays the source of truth,
+// and the next update re-renders the full state).
+export async function pushUpdate(id: string, base?: string) {
+  const origin = base || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const [apple, google] = await Promise.allSettled([pushApple(id), syncMember(id, origin)]);
+  if (apple.status === "rejected") console.error("[APPLE-WALLET] push failed", id, apple.reason);
+  if (google.status === "rejected") console.error("[GOOGLE-WALLET] sync failed", id, google.reason);
 }
 
 // Les mutations écrivent en base (incl. updated_at) et renvoient le nouveau total
@@ -51,8 +62,17 @@ async function changePoints(id: string, dPoints: number, dEarned: number): Promi
     p_delta: dPoints,
     p_earned: dEarned,
   });
-  if (!error && data != null) return data as number;
-  return legacyChange(id, dPoints, dEarned);
+  if (!error) return (data as number | null) ?? null; // null = unknown member
+  // Non-atomic fallback ONLY when the SQL function does not exist yet (before
+  // migration). Any other error (bad id, DB down…) must not bypass the atomic path.
+  if (isMissingFunction(error)) return legacyChange(id, dPoints, dEarned);
+  console.error("[STAMPS] change_points failed", error.message);
+  return null;
+}
+
+// PostgREST "function not found" (PGRST202) / Postgres undefined_function (42883).
+function isMissingFunction(error: { code?: string }): boolean {
+  return error.code === "PGRST202" || error.code === "42883";
 }
 
 export async function addPoints(id: string, n: number): Promise<number | null> {
@@ -80,9 +100,13 @@ export async function claimReward(id: string): Promise<number | null> {
     await logEvent(id, "claim", -goal);
     return data as number;
   }
-  if (!error && data == null) return null; // fonction OK mais solde insuffisant
+  if (!error && data == null) return null; // function OK but not enough stamps / unknown member
+  if (error && !isMissingFunction(error)) {
+    console.error("[STAMPS] claim_reward failed", error.message);
+    return null;
+  }
 
-  // Repli (fonction absente) : ancienne vérification non-atomique.
+  // Fallback (function missing, before migration): old non-atomic check.
   const { data: m } = await db.from("members").select("points").eq("id", id).single();
   if (!m || (m.points ?? 0) < goal) return null;
   const points = (m.points ?? 0) - goal;

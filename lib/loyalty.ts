@@ -1,22 +1,29 @@
-export const GOAL = 10; // seuil par défaut (surchargé par settings.goal)
+// Buy 9 coffees, the 10th is free: 9 stamps = 1 free coffee.
+export const GOAL = 9; // default goal (overridden by settings.goal)
 
-// Tampons du cycle en cours (0..goal-1).
+// Stamps in the current cycle (0..goal-1).
 export function cycle(points: number, goal: number = GOAL): number {
   return ((points % goal) + goal) % goal;
 }
 
-// Pizzas offertes disponibles (cumul).
+// Free coffees available (cumulative).
 export function rewardsAvailable(points: number, goal: number = GOAL): number {
   return Math.floor(Math.max(0, points) / goal);
 }
 
-// Rangée de tampons (texte) pour le cycle en cours.
+// Stamps to show on a card: a full card while a reward is waiting to be
+// redeemed (9/9 rather than 0/9), otherwise the current cycle.
+export function displayStamps(points: number, goal: number = GOAL): number {
+  return rewardsAvailable(points, goal) > 0 ? goal : cycle(points, goal);
+}
+
+// Text row of stamps for the current cycle.
 export function stamps(points: number, goal: number = GOAL): string {
   const c = cycle(points, goal);
   return "●".repeat(c) + "○".repeat(goal - c);
 }
 
-// Pizzas restantes avant la prochaine récompense.
+// Coffees left before the next reward.
 export function remaining(points: number, goal: number = GOAL): number {
   return goal - cycle(points, goal);
 }

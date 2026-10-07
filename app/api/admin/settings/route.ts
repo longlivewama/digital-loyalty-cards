@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { updateSettings } from "@/lib/settings";
 import { refreshActiveCards } from "@/lib/broadcast";
+import { refreshClass } from "@/lib/googleWallet";
+import { baseUrl } from "@/lib/url";
 
 export const runtime = "nodejs";
 
-// Enregistre les réglages du resto (infos carte + seuil).
+// Saves the shop settings (card details + review nudge).
 export async function POST(req: NextRequest) {
   const f = await req.formData();
-  // Deux formulaires distincts postent ici (resto / avis) : on ne patche que
-  // les champs de la section soumise, sinon enregistrer l'un écraserait l'autre.
+  // Two separate forms post here (shop / review): only patch the fields of the
+  // submitted section, otherwise saving one would overwrite the other.
   const section = String(f.get("section") || "resto");
 
   if (section === "review") {
@@ -25,20 +27,20 @@ export async function POST(req: NextRequest) {
     });
   } else {
     await updateSettings({
-      resto_name: String(f.get("resto_name") || "").trim() || "Pizzeria Esempio",
+      resto_name: String(f.get("resto_name") || "").trim() || "Coffee Shop",
       address: String(f.get("address") || "").trim(),
       phone: String(f.get("phone") || "").trim() || null,
       hours: String(f.get("hours") || "").trim(),
       instagram: String(f.get("instagram") || "").trim(),
-      // Palier (goal) volontairement non modifiable depuis l'UI : il reste sur
-      // sa valeur en base pour éviter les cartes incohérentes.
+      // The goal is deliberately not editable from the UI: it keeps its
+      // database value (9) to avoid inconsistent cards.
     });
   }
 
-  // Ces réglages s'affichent sur les cartes déjà dans les Wallet : on les
-  // rafraîchit en arrière-plan (after) pour qu'elles reflètent les nouvelles
-  // infos sans faire attendre le commerçant.
-  after(() => refreshActiveCards());
+  // These details are shown on cards already in Wallets: refresh them in the
+  // background (after) — Apple via APNs, Google via its loyalty class.
+  const base = await baseUrl();
+  after(() => Promise.allSettled([refreshActiveCards(), refreshClass(base)]));
 
   return NextResponse.redirect(new URL("/dashboard/settings?saved=1", req.url), 303);
 }

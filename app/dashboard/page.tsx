@@ -7,17 +7,17 @@ export const dynamic = "force-dynamic";
 
 function timeAgo(iso: string): string {
   const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (m < 1) return "à l'instant";
-  if (m < 60) return `il y a ${m} min`;
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `il y a ${h} h`;
-  return `il y a ${Math.floor(h / 24)} j`;
+  if (h < 24) return `${h} h ago`;
+  return `${Math.floor(h / 24)} d ago`;
 }
 const ACT: Record<string, (d: number) => string> = {
-  signup: () => "s'est inscrit",
-  add: (d) => `+${d} pizza${d > 1 ? "s" : ""}`,
+  signup: () => "signed up",
+  add: (d) => `+${d} coffee${d > 1 ? "s" : ""}`,
   remove: () => "−1 (correction)",
-  claim: () => "🎉 récompense utilisée",
+  claim: () => "🎉 free coffee redeemed",
 };
 
 export default async function Home() {
@@ -25,7 +25,7 @@ export default async function Home() {
   const { data: members } = await db.from("members").select("registered_at,total_earned,created_at");
   const list = members ?? [];
   const active = list.filter((m) => m.registered_at).length;
-  const pizzas = list.reduce((a, m) => a + (m.total_earned ?? 0), 0);
+  const coffees = list.reduce((a, m) => a + (m.total_earned ?? 0), 0);
 
   let migrationNeeded = false;
   try {
@@ -33,7 +33,7 @@ export default async function Home() {
     if (error) migrationNeeded = true;
   } catch { migrationNeeded = true; }
 
-  // ───────── Temps réel : événements des 7 derniers jours ─────────
+  // ───────── Live: events of the last 7 days ─────────
   const now = new Date();
   const since7 = new Date(now.getTime() - 7 * 864e5).toISOString();
   const { data: ev } = await db.from("events").select("type,created_at").gte("created_at", since7);
@@ -45,8 +45,8 @@ export default async function Home() {
   const rewardsToday = evs.filter((e) => e.type === "claim" && isToday(e.created_at)).length;
   const signupsToday = evs.filter((e) => e.type === "signup" && isToday(e.created_at)).length;
 
-  // Mini-graph 7 jours (scans/tampons par jour)
-  const LAB = ["D", "L", "M", "M", "J", "V", "S"];
+  // 7-day mini chart (scans/stamps per day)
+  const LAB = ["S", "M", "T", "W", "T", "F", "S"];
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(now.getTime() - (6 - i) * 864e5);
     const k = dk(d);
@@ -55,7 +55,7 @@ export default async function Home() {
   });
   const maxC = Math.max(1, ...week.map((d) => d.count));
 
-  // ───────── Taux de retour (clients revenus ≥2 fois) ─────────
+  // ───────── Return rate (customers who came back ≥2 times) ─────────
   const { data: adds } = await db.from("events").select("member_id").eq("type", "add");
   const tally = new Map<string, number>();
   (adds ?? []).forEach((a: { member_id: string }) =>
@@ -65,7 +65,7 @@ export default async function Home() {
   const returning = [...tally.values()].filter((c) => c >= 2).length;
   const retention = base ? Math.round((returning / base) * 100) : 0;
 
-  // ───────── Clients à relancer (inactifs 30j, carte active) ─────────
+  // ───────── Customers to win back (inactive 30 days, active card) ─────────
   const toRelance = await countTargets("inactive").catch(() => 0);
 
   const activity = await recentActivity(10);
@@ -74,23 +74,23 @@ export default async function Home() {
     <div className="content-narrow">
       <div className="page-head">
         <div>
-          <div className="page-title">Bonjour 👋</div>
-          <div className="page-sub">Vue d&apos;ensemble de votre programme de fidélité</div>
+          <div className="page-title">Hello 👋</div>
+          <div className="page-sub">Overview of your coffee loyalty program</div>
         </div>
       </div>
 
       {migrationNeeded && (
-        <div className="note warn">⚠️ Migration SQL à lancer (<strong>MIGRATION-DASHBOARD.sql</strong>) pour activer activité, historique, notifs &amp; réglages.</div>
+        <div className="note warn">⚠️ Database migrations are missing (run <strong>npm run db:reset</strong> locally, or the SQL in <strong>supabase/migrations</strong>) to enable activity, history, notifications &amp; settings.</div>
       )}
 
-      {/* ───────── EN DIRECT ───────── */}
+      {/* ───────── LIVE ───────── */}
       <div className="panel live">
-        <div className="live-head"><span className="live-dot" /> En direct · aujourd&apos;hui</div>
+        <div className="live-head"><span className="live-dot" /> Live · today</div>
         <div className="live-row">
           <div className="live-stats">
             <div className="live-stat"><div className="v">{scansToday}</div><div className="l">Scans</div></div>
-            <div className="live-stat"><div className="v">{rewardsToday}</div><div className="l">Récompenses</div></div>
-            <div className="live-stat"><div className="v">{signupsToday}</div><div className="l">Nouveaux</div></div>
+            <div className="live-stat"><div className="v">{rewardsToday}</div><div className="l">Rewards</div></div>
+            <div className="live-stat"><div className="v">{signupsToday}</div><div className="l">New</div></div>
           </div>
           <div className="spark" aria-hidden>
             {week.map((d, i) => (
@@ -111,36 +111,36 @@ export default async function Home() {
 
       {/* ───────── KPIs ───────── */}
       <div className="grid-kpi">
-        <div className="kpi"><div className="ico">👥</div><div className="v">{list.length}</div><div className="l">Membres</div></div>
-        <div className="kpi"><div className="ico">📲</div><div className="v">{active}</div><div className="l">Cartes actives</div></div>
-        <div className="kpi"><div className="ico">🔁</div><div className="v">{retention}%</div><div className="l">Taux de retour</div></div>
-        <div className="kpi"><div className="ico">🍕</div><div className="v">{pizzas}</div><div className="l">Pizzas données</div></div>
+        <div className="kpi"><div className="ico">👥</div><div className="v">{list.length}</div><div className="l">Members</div></div>
+        <div className="kpi"><div className="ico">📲</div><div className="v">{active}</div><div className="l">Active Apple cards</div></div>
+        <div className="kpi"><div className="ico">🔁</div><div className="v">{retention}%</div><div className="l">Return rate</div></div>
+        <div className="kpi"><div className="ico">☕</div><div className="v">{coffees}</div><div className="l">Coffees stamped</div></div>
       </div>
 
-      {/* ───────── Relance ───────── */}
+      {/* ───────── Win-back ───────── */}
       {toRelance > 0 && (
         <Link href="/dashboard/notify" className="relance">
           <span className="relance-ico">🔔</span>
           <div className="grow">
-            <strong>{toRelance} client{toRelance > 1 ? "s" : ""} à relancer</strong>
-            <div className="page-sub" style={{ display: "block", marginTop: 2 }}>Inactifs depuis 30 jours · notification prête</div>
+            <strong>{toRelance} customer{toRelance > 1 ? "s" : ""} to win back</strong>
+            <div className="page-sub" style={{ display: "block", marginTop: 2 }}>Inactive for 30 days · notification ready</div>
           </div>
-          <span className="relance-cta">Relancer →</span>
+          <span className="relance-cta">Notify →</span>
         </Link>
       )}
 
       <div className="qa-grid">
-        <Link href="/dashboard/members" className="qa"><span className="qa-ico">👥</span>Voir les membres</Link>
-        <Link href="/dashboard/notify" className="qa"><span className="qa-ico">✦</span>Envoyer une notif</Link>
+        <Link href="/dashboard/members" className="qa"><span className="qa-ico">👥</span>View members</Link>
+        <Link href="/dashboard/notify" className="qa"><span className="qa-ico">✦</span>Send a notification</Link>
       </div>
 
       <div className="panel">
-        <div className="panel-title">Activité récente</div>
-        {activity.length === 0 && <p className="page-sub">Aucune activité pour l&apos;instant.</p>}
+        <div className="panel-title">Recent activity</div>
+        {activity.length === 0 && <p className="page-sub">No activity yet.</p>}
         {activity.map((e) => (
           <div key={e.id} className="row-item">
             <span className="av">{(e.name || "?").charAt(0).toUpperCase()}</span>
-            <div className="grow"><strong>{e.name || "Client"}</strong> <span className="page-sub" style={{ display: "inline" }}>{ACT[e.type]?.(e.delta) ?? e.type}</span></div>
+            <div className="grow"><strong>{e.name || "Customer"}</strong> <span className="page-sub" style={{ display: "inline" }}>{ACT[e.type]?.(e.delta) ?? e.type}</span></div>
             <span className="t">{timeAgo(e.created_at)}</span>
           </div>
         ))}

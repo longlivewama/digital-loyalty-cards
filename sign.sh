@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# === CONFIG — remplis ces 4 valeurs ===
-PASS_DIR="PizzaCard.pass"
+# === CONFIG — fill in these values ===
+PASS_DIR="pass-sample.pass"
 CERT_PEM="certs/passcert.pem"   # ton certificat Pass Type ID (avec cle privee), format PEM
 WWDR_PEM="certs/wwdr.pem"       # certificat Apple WWDR G4, format PEM
 CERT_PASSWORD=""                # mot de passe de la cle privee (vide si aucun)
@@ -38,11 +38,11 @@ openssl smime -binary -sign \
   -outform DER \
   -passin "pass:$CERT_PASSWORD"
 
-echo "4/4  Zip -> PizzaCard.pkpass..."
-rm -f PizzaCard.pkpass
+echo "4/4  Zip -> SampleCard.pkpass..."
+rm -f SampleCard.pkpass
 cd "$PASS_DIR"
-zip -q -r ../PizzaCard.pkpass . -x '.*'
+zip -q -r ../SampleCard.pkpass . -x '.*'
 cd ..
 
-echo "OK -> $(pwd)/PizzaCard.pkpass"
+echo "OK -> $(pwd)/SampleCard.pkpass"
 echo "AirDrop ce fichier vers ton iPhone, ou ouvre-le sur Mac."
