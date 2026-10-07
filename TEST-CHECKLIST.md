@@ -1,3 +1,5 @@
+> **Historical note:** original planning notes (in French) from the pizzeria version of this project. The current product is a coffee shop card: **9 stamps = 1 free coffee**, Apple Wallet + Google Wallet. See README.md for current behaviour.
+
 # Checklist de test — MVP (Mac + iPhone)
 
 URL : https://wallet-loyalty.vercel.app · PIN resto : **210110**

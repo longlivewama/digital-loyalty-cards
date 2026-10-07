@@ -1,3 +1,5 @@
+> **Historical note:** original planning notes (in French) from the pizzeria version of this project. The current product is a coffee shop card: **9 stamps = 1 free coffee**, Apple Wallet + Google Wallet. See README.md for current behaviour.
+
 # Carte de fidélité Apple Wallet — Pizzeria Esempio
 
 Document de référence du MVP. But : poser le concept, ce qui est déjà construit, et tous les cas à gérer pour pouvoir build sereinement sans rien oublier.
